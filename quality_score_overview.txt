@@ -1,0 +1,41 @@
+Per Base Sequence Quality
+
+I saw similar trends for each of my 4 files for this graph. Each one had some positions between 20 and 28 (the yellow region), but each one gave me a green check mark. This is not an indicator of bad data.
+
+Per Tile Sequence Quality
+
+I had warnings in both of my SRR25630298 files, but no warnings in the other SRR files. I saw warmer coloring in the top right corner of each of them, with more prominent colors in the 298 SRR. Overall, since there are a very small number of tiles that are affected, it is not an indicator of bad data.
+
+Per sequence quality scores
+
+All of my files show the same trend for per sequence quality score, with the majority of sequences at or around an average quality score of 37. This is an indicator of good quality data.
+
+Per Base Sequence Content
+
+All of my files failed this metric, but when looking at the graphs, they all show high variability at the beginning of the sequence and a more stable content later in the sequence. This occurs because we are using barcodes at the beginning of each sequence, so this is not something to worry about for the quality of the data.
+
+Per Base GC Content
+
+All of my files show a close to normal GC distribution across all sequences, with no real outliers in the data.
+
+Per Base N Content
+
+All of my files show little to no N content across all bases, which is an indicator of good quality data.
+
+Sequence Length Distribution
+
+All of my files show the same sequence length distribution, between 149 and 151, with most of the reads at length 150. 
+
+Sequence Duplication Levels
+
+All of my files give an error for duplication levels, but because we are using RNA data, and fastQC assumes whole genome data, this is not indicative of bad quality data.
+
+Overrepresented Sequences
+
+All of my files give a warning for overrepresented sequences, with around 5 sequences listed. This is expected given that we are using RNA data that is not randomly fragmented.
+
+Adapter Content
+
+2 of my files give an error for adapter content, but because we are using same-length adapters on RNA data, it is assumed that these adapters will be trimmed before continuing with any downstream analysis, and therefore is not an issue for the quality of the data.
+
+Overall, both SRRs are of good enough quality data to continue using for this project.
