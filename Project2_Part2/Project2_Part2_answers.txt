@@ -1,0 +1,23 @@
+Cutadapt commands used:
+
+cutadapt -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCA -A AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT -o SRR25630298_1_cut.fastq -p SRR25630298_2_cut.fastq SRR25630298_1.fastq SRR25630298_2.fastq
+
+cutadapt -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCA -A AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT -o SRR25630380_1_cut.fastq -p SRR25630380_2_cut.fastq SRR25630380_1.fastq SRR25630380_2.fastq
+
+Bash commands used to confirm:
+grep '^AGATCGGAAGAGCACACGTCTGAACTCCAGTCA' SRR25630298_1_cut.fastq
+
+grep '^AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT' SRR25630298_2_cut.fastq
+
+grep '^AGATCGGAAGAGCACACGTCTGAACTCCAGTCA' SRR25630380_1_cut.fastq
+
+grep '^AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT' SRR25630380_2_cut.fastq
+
+Trimmomatic commands used:
+Project-2-Electric-organ-RNA-seq-analysis/Project2_Part2/run_trimmomatic_298.sh
+
+Project-2-Electric-organ-RNA-seq-analysis/Project2_Part2/run_trimmomatic_380.sh
+
+Based on my plots, I don't expect R1s to be adapter-trimmed at different rates than R2s because there is very little difference in the distributions between R1s and R2s in both samples. 
+There is some variability in the shorter length reads, but the majority of the reads are longer length and consistent between R1 and R2. Any variability could be explained by sequencing 
+error, or just missing adapters, but there doesn't seem to be much of that for my samples. 
