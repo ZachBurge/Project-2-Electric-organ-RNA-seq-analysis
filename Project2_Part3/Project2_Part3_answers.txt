@@ -15,10 +15,46 @@ Number of unmapped reads for SRR25630380 alignment:
 bash command on htseq-count outputs:
 Number of mapped reads for SRR25630298 (stranded=yes):
 grep -v "^__" SRR25630298_counts_stranded_yes | awk '{sum += $2} END {print sum}'
-1419110
+1855968
+Total number of reads (stranded=yes):
+awk '{sum += $2} END {print sum}' SRR25630298_counts_stranded_yes
+63428820
+
+Percent of mapped reads for SRR25630298 (stranded=yes):
+2.926%
+
+Number of mapped reads for SRR25630298 (stranded=reverse):
+grep -v "^__" SRR25630298_counts_stranded_reverse | awk '{sum += $2} END {print sum}'
+35218698
+Total number of reads (stranded=reverse):
+awk '{sum += $2} END {print sum}' SRR25630298_counts_stranded_reverse
+63428820
+
+Percent of mapped reads for SRR25630298 (stranded=yes):
+55.525%
+
+Number of mapped reads for SRR25630380 (stranded=yes):
+grep -v "^__" SRR25630380_counts_stranded_yes | awk '{sum += $2} END {print sum}'
+870573
+Total number of reads (stranded=yes):
+awk '{sum += $2} END {print sum}' SRR25630380_counts_stranded_yes
+32460923
+
+Percent of mapped reads for SRR25630380 (stranded=yes):
+2.682%
+
+Number of mapped reads for SRR25630380 (stranded=reverse):
+grep -v "^__" SRR25630380_counts_stranded_reverse | awk '{sum += $2} END {print sum}'
+16070746
+Total number of reads (stranded=reverse):
+awk '{sum += $2} END {print sum}' SRR25630380_counts_stranded_reverse
+32460923
+
+Percent of mapped reads for SRR25630380 (stranded=yes):
+49.508%
 
 According to the kit information, the libraries incorporate dUTP during the second strand synthesis step. This indicates that during amplification, the second strands are degraded since they are the ones with the dUTP.
 Therefore, this library is first strand cDNA. According to the article provided, "First strand cDNA libraries require the use of the stranded ‘Reverse’ option for RNA-Seq workflow using the htseq-count tool." This means that
-the library we are using requires the stranded=reverse option. The counts above support that, because the reverse runs have much higher proportions of mapped reads than the yes runs. According to the paper, when the htseq tool
-was written, it was more common for libraries to be second strand specific, which is why the default stranded option for htseq-count is "yes". Newer, more recent kits have switched to first strand specific and therefore require
-the reverse option.
+the library we are using requires the stranded=reverse option. The counts above support that because the reverse runs have much higher proportions of mapped reads than the yes runs. The reverse runs have around 50% of the reads mapped back to genes, 
+whereas the yes runs have only 2-3%. According to the paper, when the htseq tool was written, it was more common for libraries to be second strand specific, which is why the default stranded option for htseq-count is "yes". 
+Newer, more recent kits have switched to first strand specific and therefore require the reverse option.
