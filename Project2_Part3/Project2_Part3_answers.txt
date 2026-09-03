@@ -1,0 +1,11 @@
+Number of mapped reads for SRR25630298 alignment:
+120,654,833
+
+Number of unmapped reads for SRR25630298 alignment:
+6,202,807
+
+Number of mapped reads for SRR25630380 alignment:
+61,373,166
+
+Number of unmapped reads for SRR25630380 alignment:
+3,548,680
