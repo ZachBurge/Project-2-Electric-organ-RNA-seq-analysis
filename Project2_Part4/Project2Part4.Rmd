@@ -226,14 +226,14 @@ alpha = 0.05
 join4$sig = -log10(join4$padj_avgs)
 sum(is.infinite(join4$sig))
 ## Volcano plot of adjusted p-values
-cols <- densCols(join4$log2FC_avgs, join4$sig)
-cols[join4$padj_avgs ==0] <- "purple"
+cols <- densCols(-join4$log2FC_avgs, join4$sig)
+cols[-join4$padj_avgs ==0] <- "purple"
 join4$pch <- 19
 join4$pch[join4$padj_avgs ==0] <- 6
-plot(join4$log2FC_avgs, 
+plot(-join4$log2FC_avgs, 
      join4$sig, 
      col=cols, panel.first=grid(),
-     main="Volcano plot", 
+     main="Volcano plot of negative adjusted p-values", 
      xlab="Effect size: log2(fold-change)",
      ylab="-log10(adjusted p-value)",
      pch=join4$pch, cex=0.4)
@@ -243,7 +243,7 @@ abline(h=-log10(alpha), col="brown")
 
 ## Plot the names of a reasonable number of genes, by selecting those begin not only significant but also having a strong effect size
 gn.selected <- abs(join4$log2FC_avgs) > 2 & join4$sig > 30
-text(join4$log2FC_avgs[gn.selected],
+text(-join4$log2FC_avgs[gn.selected],
      -log10(join4$padj_avgs)[gn.selected],
      lab=rownames(join4)[gn.selected ], cex=0.6)
 
@@ -264,7 +264,12 @@ Visualization of gene with highest log2FC in SM
 join4_sorted = join4[order(join4$log2FC_avgs, decreasing = TRUE),]
 head(join4_sorted,1)
 
-plotCounts(campys, gene="maker-ptg002090l-augustus-gene-21.6-mRNA-1", intgroup="Tissue", normalized=FALSE, col=campys$Tissue)
+plotCounts(campys, gene="maker-ptg002090l-augustus-gene-21.6-mRNA-1", intgroup="Tissue", normalized=TRUE, col=campys$Tissue)
+
+join4_sorted = join4[order(join4$log2FC_avgs, decreasing = FALSE),]
+head(join4_sorted,1)
+
+plotCounts(campys, gene="maker-ptg000521l-snap-gene-0.25-mRNA-1", intgroup="Tissue", normalized=TRUE, col=campys$Tissue)
 ```
 
 
