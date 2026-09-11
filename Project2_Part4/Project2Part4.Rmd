@@ -1,0 +1,276 @@
+---
+title: "Project 2 Part 4 - DESeq"
+name: Zach Burge
+date: "09/09/2026"
+---
+
+```{r}
+library(edgeR)
+library(limma)
+library(Glimma)
+library(ggplot2)
+library(RColorBrewer)
+library(DESeq2)
+library(apeglm)
+library("pheatmap")
+library("RColorBrewer")
+library("PoiClaClu")
+library("glmpca")
+library("ashr")
+library(tidyverse)
+```
+
+```{r}
+campy_meta = read.csv("Project2_RNAseq_metadata_campy.csv")
+campy_meta = filter(campy_meta, campy_meta$SRRfile != "SRR25630366")
+campys = DESeqDataSetFromHTSeqCount(campy_meta, directory = "counts_tar", design=~SpeciesSmaller+Tissue+SpeciesSmaller:Tissue)
+campys
+```
+FILTERING
+```{r}
+myCPM = cpm(campys)
+head(myCPM)
+# Which values in myCPM are greater than 0.5?
+thresh = myCPM > 0.5
+head(thresh)
+# Summary of how many TRUEs there are in each row by sample
+table(rowSums(thresh))
+# we would like to keep genes that have at least 2 TRUES in each row of thresh
+keep <- rowSums(thresh) >= 2
+# Subset the rows of count data to keep the more highly expressed genes
+campys <- campys[keep,]
+campys
+```
+NORMALIZING
+```{r}
+campys = estimateSizeFactors(campys)
+sizeFactors(campys)
+campys = estimateDispersions(campys)
+mcols(campys)
+```
+
+RUNNING DESEQ
+```{r}
+campys <- DESeq(campys)
+```
+
+
+```{r}
+campys_results <- results(campys)
+resultsNames(campys)
+```
+
+NORMALIZE FOR DIMENSIONALITY REDUCTION
+```{r}
+campy_rlog_transformation = rlog(campys, blind = FALSE)
+```
+We use rlog because even though we have more than 30 samples, we have less than 30 samples per condition. There are replicate samples within our data, so we can use rlog instead of vst. We could have also used vst though.
+
+GENERATING HEATMAP
+```{r}
+sampleDists <- dist(t(assay(campy_rlog_transformation)))
+sampleDistMatrix <- as.matrix( sampleDists )
+rownames(sampleDistMatrix) <- paste( campy_rlog_transformation$SpeciesSmaller, campy_rlog_transformation$Tissue, sep = " - " )
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows = sampleDists,
+         clustering_distance_cols = sampleDists,
+         col = colors)
+
+```
+```{r}
+poisd <- PoissonDistance(t(counts(campys)))
+samplePoisDistMatrix <- as.matrix( poisd$dd )
+rownames(samplePoisDistMatrix) <- paste( campy_rlog_transformation$SpeciesSmaller, campy_rlog_transformation$Tissue, campy_rlog_transformation$SRRfile, sep=" - " )
+colnames(samplePoisDistMatrix) <- NULL
+pheatmap(samplePoisDistMatrix,
+         clustering_distance_rows = poisd$dd,
+         clustering_distance_cols = poisd$dd,
+         col = colors)
+```
+These heatmaps are showing the similarity between the samples. The SM samples are all much more closely similar to each other than the EO samples, and vice versa. The Poisson plot is a different way of measuring the distance between the samples, but has a similar result. There is one potential outlier in these plot. When looking at the right side where each sample is labeled as SM or EO, there is one SM within the EO group in both heatmap plots. This is the only sample to do this.
+
+PCA PLOT
+```{r}
+plotPCA(campy_rlog_transformation, intgroup = c("SpeciesSmaller", "Tissue"))
+```
+
+```{r}
+pcaData = plotPCA(campy_rlog_transformation, intgroup = c("SpeciesSmaller", "Tissue"), returnData = TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+ggplot(pcaData, aes(x = PC1, y = PC2, color = SpeciesSmaller, shape = Tissue)) +
+  geom_point(size =3) +
+  xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+  ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+  coord_fixed() +
+  ggtitle("PCA with Rlog data")
+```
+
+GENERALIZED PCA PLOT
+```{r}
+gpca <- glmpca(counts(campys), L=2)
+gpca.dat <- gpca$factors
+gpca.dat$SpeciesSmaller <- campys$SpeciesSmaller
+gpca.dat$Tissue <- campys$Tissue
+ggplot(gpca.dat, aes(x = dim1, y = dim2, color = SpeciesSmaller, shape = Tissue)) +
+  geom_point(size =3) + coord_fixed() + ggtitle("glmpca - Generalized PCA")
+```
+
+MDS PLOT WITH RLOG DATA
+```{r}
+mds <- as.data.frame(colData(campy_rlog_transformation))  %>%
+         cbind(cmdscale(sampleDistMatrix))
+ggplot(mds, aes(x = `1`, y = `2`, color = SpeciesSmaller, shape = Tissue)) +
+  geom_point(size = 3) + coord_fixed() + ggtitle("MDS with Rlog data")
+```
+
+MDS PLOT WITH POISSION DATA
+```{r}
+mdsPois <- as.data.frame(colData(campys)) %>%
+   cbind(cmdscale(samplePoisDistMatrix))
+ggplot(mdsPois, aes(x = `1`, y = `2`, color = SpeciesSmaller, shape = Tissue)) +
+  geom_point(size = 3) + coord_fixed() + ggtitle("MDS with PoissonDistances")
+```
+
+These plots reduce the dimensionality of the data down to a plot-able format. The x-axis, PC1, represents the most variance among the data points. The y-axis, PC2, represents the second most. The generalized PCA is different because it is more effective for non-normally distributed data, and uses the count matrix as an input. The MDS uses the distances calculated from the Rlog data to make a similar plot as the PCAs. Overall, the clarity of the plots increases from PCA to Generalized PCA to MDS, but each one clearly distinguishes between the EO and SM, along with the different species.
+
+Overall, all of the plots show 1 sample that is not right. There is one SM sample that appears near all of the EO samples instead of with the other SM samples, so this one would be considered an outlier. Besides that one, the rest of the data looks good.
+
+```{r}
+resultsNames(campys)
+
+Cco_SMvsEO_results = data.frame(lfcShrink(
+  campys,
+  coef = "Tissue_SM_vs_EO",
+  type = "ashr"
+)) %>%
+  rownames_to_column(var = "genes") %>%
+  filter(padj < 0.05) %>%
+  filter(abs(log2FoldChange) > 1) %>%
+  rename("Cco_pvalue_adj" = "padj",
+         "Cco_log2FoldChange" = "log2FoldChange") %>%
+  select(genes, Cco_log2FoldChange, Cco_pvalue_adj)
+
+Crh_SMvsEO_results = data.frame(lfcShrink(
+  campys,
+  contrast = list(c("Tissue_SM_vs_EO", "SpeciesSmallerCrh.TissueSM")),
+  type = "ashr"
+)) %>%
+  rownames_to_column(var = "genes") %>%
+  filter(padj < 0.05) %>%
+  filter(abs(log2FoldChange) > 1) %>%
+  rename("Chr_pvalue_adj" = "padj",
+         "Chr_log2FoldChange" = "log2FoldChange") %>%
+  select(genes, Chr_log2FoldChange, Chr_pvalue_adj)
+
+Cts_SMvsEO_results = data.frame(lfcShrink(
+  campys,
+  contrast = list(c("Tissue_SM_vs_EO", "SpeciesSmallerCts.TissueSM")),
+  type = "ashr"
+)) %>%
+  rownames_to_column(var = "genes") %>%
+  filter(padj < 0.05) %>%
+  filter(abs(log2FoldChange) > 1) %>%
+  rename("Cts_pvalue_adj" = "padj",
+         "Cts_log2FoldChange" = "log2FoldChange") %>%
+  select(genes, Cts_log2FoldChange, Cts_pvalue_adj)
+
+CcoxCrh_SMvsEO_results = data.frame(lfcShrink(
+  campys,
+  contrast = list(c("Tissue_SM_vs_EO", "SpeciesSmallerCcoxCrh.TissueSM")),
+  type = "ashr"
+)) %>%
+  rownames_to_column(var = "genes") %>%
+  filter(padj < 0.05) %>%
+  filter(abs(log2FoldChange) > 1) %>%
+  rename("CcoxCrh_pvalue_adj" = "padj",
+         "CcoxCrh_log2FoldChange" = "log2FoldChange") %>%
+  select(genes, CcoxCrh_log2FoldChange, CcoxCrh_pvalue_adj)
+
+CcoxCts_SMvsEO_results = data.frame(lfcShrink(
+  campys,
+  contrast = list(c("Tissue_SM_vs_EO", "SpeciesSmallerCcoxCts.TissueSM")),
+  type = "ashr"
+)) %>%
+  rownames_to_column(var = "genes") %>%
+  filter(padj < 0.05) %>%
+  filter(abs(log2FoldChange) > 1) %>%
+  rename("CcoxCts_pvalue_adj" = "padj",
+         "CcoxCts_log2FoldChange" = "log2FoldChange") %>%
+  select(genes, CcoxCts_log2FoldChange, CcoxCts_pvalue_adj)
+```
+
+JOIN DATASETS
+```{r}
+join1 = inner_join(Cco_SMvsEO_results, Crh_SMvsEO_results, by = "genes")
+join2 = inner_join(join1, Cts_SMvsEO_results, by = "genes")
+join3 = inner_join(join2, CcoxCrh_SMvsEO_results, by = "genes")
+join4 = inner_join(join3, CcoxCts_SMvsEO_results, by = "genes")
+
+log2FC_avgs = join4 %>%
+  select(contains("log2FoldChange")) %>%
+  rowMeans()
+padj_avgs = join4 %>%
+  select(contains("pvalue_adj")) %>%
+  rowMeans()
+
+join4 = join4 %>%
+  mutate(log2FC_avgs = log2FC_avgs) %>%
+  mutate(padj_avgs = padj_avgs)
+```
+
+Volcano Plot
+```{r}
+alpha = 0.05
+join4$sig = -log10(join4$padj_avgs)
+sum(is.infinite(join4$sig))
+## Volcano plot of adjusted p-values
+cols <- densCols(join4$log2FC_avgs, join4$sig)
+cols[join4$padj_avgs ==0] <- "purple"
+join4$pch <- 19
+join4$pch[join4$padj_avgs ==0] <- 6
+plot(join4$log2FC_avgs, 
+     join4$sig, 
+     col=cols, panel.first=grid(),
+     main="Volcano plot", 
+     xlab="Effect size: log2(fold-change)",
+     ylab="-log10(adjusted p-value)",
+     pch=join4$pch, cex=0.4)
+abline(v=0)
+abline(v=c(-1,1), col="brown")
+abline(h=-log10(alpha), col="brown")
+
+## Plot the names of a reasonable number of genes, by selecting those begin not only significant but also having a strong effect size
+gn.selected <- abs(join4$log2FC_avgs) > 2 & join4$sig > 30
+text(join4$log2FC_avgs[gn.selected],
+     -log10(join4$padj_avgs)[gn.selected],
+     lab=rownames(join4)[gn.selected ], cex=0.6)
+
+```
+
+Question 9
+
+Top 5 lowest adjusted pvalues
+```{r}
+join4_sorted = join4[order(join4$padj_avgs),]
+join4_top5_lowest_padj = head(join4_sorted, 5)
+join4_top5_lowest_padj[,1]
+```
+
+Visualization of gene with highest log2FC in SM
+
+```{r}
+join4_sorted = join4[order(join4$log2FC_avgs, decreasing = TRUE),]
+head(join4_sorted,1)
+
+plotCounts(campys, gene="maker-ptg002090l-augustus-gene-21.6-mRNA-1", intgroup="Tissue", normalized=FALSE, col=campys$Tissue)
+```
+
+
+
+
+
+
+
+

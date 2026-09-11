@@ -58,7 +58,9 @@ other packages, but we cannot guarantee support for other packages.
     expression between the electric organ and skeletal muscle. Write the
     null hypothesis for this goal below.
 
-[Write the null hypothesis here]
+mu = the level of differential gene expression between electric organ and skeletal muscle.
+H_0: mu = 0
+H_1: mu != 0
 
 1.  Load your data into DESeq2
 
@@ -73,9 +75,11 @@ other packages, but we cannot guarantee support for other packages.
 
 ```{r}
 #Include your commands, remember that you might not need to load all of the count files for this hypothesis
+campy_meta = read.csv("Project2_RNAseq_metadata_campy.csv")
+campys = DESeqDataSetFromHTSeqCount(campy_meta, directory = "counts_tar", design=~SpeciesSmaller+Tissue)
 ```
 
-[Explain the logic behind your design formula]
+I chose to use SpeciesSmaller+Tissue because Tissue is the variable that we want to test for, and the species is another variable that could account for variation that we want to control for. I also added SpeciesSmaller:Tissue because when working with Hannah B, we decided that those 2 could potentially have an impact on each other's genetic expression, so we wanted to account for that in the design formula.
 
 2.  Filter the dataset to remove genes that are lowly expressed
 
@@ -85,10 +89,10 @@ other packages, but we cannot guarantee support for other packages.
 - Describe why you used your filtering strategy
 
 ```{r}
-#Include your commands
+See Part4 Rmd
 ```
 
-[Specify which approach you chose and why]
+I chose cpm beacuse it normalizes the data before filtering, which helps account for sequencing depth.
 
 3.  Normalize the dataset and run differential expression analysis
 
